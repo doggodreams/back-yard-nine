@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Back Yard Nine — Putting Scorecard</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1B4332">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Back Yard Nine">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --turf-dark:#0F2E1F;
+    --turf:#1B4332;
+    --fairway:#2D6A4F;
+    --flag-yellow:#FFB703;
+    --paper:#F3EEDD;
+    --ink:#16231B;
+    --ink-soft:#4A5D51;
+    --line:#C9BFA0;
+    --white:#FBFAF4;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--turf-dark);
+    background-image:
+      radial-gradient(circle at 50% 0%, rgba(255,183,3,0.08), transparent 60%),
+      repeating-linear-gradient(90deg, rgba(255,255,255,0.015) 0px, rgba(255,255,255,0.015) 2px, transparent 2px, transparent 40px);
+    color:var(--ink);
+    font-family:'IBM Plex Mono', monospace;
+    min-height:100vh;
+    padding:0 0 48px;
+  }
+  .wrap{max-width:520px;margin:0 auto;padding:0 14px;}
+
+  header{
+    padding:28px 14px 18px;
+    text-align:center;
+    position:relative;
+  }
+  .eyebrow{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    letter-spacing:.28em;
+    color:var(--flag-yellow);
+    text-transform:uppercase;
+    opacity:.85;
+    margin-bottom:6px;
+  }
+  h1{
+    font-family:'Oswald',sans-serif;
+    font-weight:700;
+    font-size:clamp(30px,9vw,42px);
+    letter-spacing:.01em;
+    color:var(--white);
+    margin:0 0 4px;
+    line-height:1.02;
+  }
+  .subtitle{
+    color:#9FB3A6;
+    font-size:12.5px;
+    letter-spacing:.02em;
+  }
+
+  .card{
+    background:var(--paper);
+    border-radius:14px;
+    box-shadow:0 18px 40px rgba(0,0,0,0.35);
+    overflow:hidden;
+    margin-top:18px;
+    border:1px solid rgba(0,0,0,0.06);
+  }
+
+  .strip{
+    background:var(--turf);
+    color:var(--paper);
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:10px 16px;
+    font-family:'Oswald',sans-serif;
+    font-size:13px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+  }
+  .strip span:last-child{color:var(--flag-yellow);}
+
+  .hole{
+    display:grid;
+    grid-template-columns:44px 1fr auto;
+    align-items:center;
+    gap:10px;
+    padding:14px 16px;
+    border-bottom:1px solid var(--line);
+  }
+  .hole:last-of-type{border-bottom:none;}
+
+  .hole-num{
+    font-family:'Oswald',sans-serif;
+    font-weight:600;
+    font-size:22px;
+    color:var(--fairway);
+    text-align:center;
+    position:relative;
+  }
+  .hole-num::after{
+    content:'';
+    display:block;
+    width:16px;height:2px;
+    background:var(--flag-yellow);
+    margin:5px auto 0;
+    border-radius:2px;
+  }
+
+  .hole-info{min-width:0;}
+  .hole-name{
+    font-family:'Oswald',sans-serif;
+    font-weight:500;
+    font-size:14.5px;
+    line-height:1.2;
+    color:var(--ink);
+    margin-bottom:3px;
+  }
+  .hole-meta{
+    font-size:11px;
+    color:var(--ink-soft);
+    letter-spacing:.02em;
+  }
+
+  .counter{
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .btn{
+    width:30px;height:30px;
+    border-radius:8px;
+    border:1px solid var(--fairway);
+    background:var(--white);
+    color:var(--fairway);
+    font-family:'Oswald',sans-serif;
+    font-size:17px;
+    font-weight:600;
+    display:flex;align-items:center;justify-content:center;
+    cursor:pointer;
+    user-select:none;
+    transition:transform .08s ease, background .15s ease;
+  }
+  .btn:active{transform:scale(.9);background:var(--fairway);color:#fff;}
+  .count{
+    min-width:24px;
+    text-align:center;
+    font-family:'Oswald',sans-serif;
+    font-weight:700;
+    font-size:19px;
+    color:var(--ink);
+  }
+
+  .totals{
+    background:var(--turf);
+    padding:18px 16px 20px;
+  }
+  .totals-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    color:var(--paper);
+    margin-bottom:6px;
+    font-size:12px;
+    letter-spacing:.05em;
+    text-transform:uppercase;
+  }
+  .totals-row.big{
+    margin-top:10px;
+    padding-top:12px;
+    border-top:1px dashed rgba(255,255,255,0.25);
+  }
+  .totals-row.big span:first-child{
+    font-family:'Oswald',sans-serif;
+    font-size:14px;
+    color:var(--flag-yellow);
+    text-transform:uppercase;
+  }
+  .totals-row.big span:last-child{
+    font-family:'Oswald',sans-serif;
+    font-weight:700;
+    font-size:30px;
+    color:var(--white);
+  }
+  .totals-row span:last-child{
+    font-family:'IBM Plex Mono',monospace;
+    color:var(--white);
+    font-weight:600;
+  }
+
+  .actions{
+    display:flex;
+    gap:10px;
+    margin-top:16px;
+  }
+  .action-btn{
+    flex:1;
+    padding:13px 10px;
+    border-radius:10px;
+    border:none;
+    font-family:'Oswald',sans-serif;
+    font-size:13px;
+    letter-spacing:.06em;
+    text-transform:uppercase;
+    font-weight:600;
+    cursor:pointer;
+  }
+  .action-btn.reset{
+    background:transparent;
+    color:#DDD3B0;
+    border:1px solid rgba(255,255,255,0.25);
+  }
+  .action-btn.save{
+    background:var(--flag-yellow);
+    color:var(--turf-dark);
+  }
+  .action-btn:active{opacity:.75;}
+
+  .best{
+    text-align:center;
+    color:#8FA396;
+    font-size:11px;
+    margin-top:14px;
+    letter-spacing:.03em;
+  }
+  .best b{color:var(--flag-yellow);font-weight:600;}
+
+  .toast{
+    position:fixed;
+    bottom:20px;left:50%;
+    transform:translateX(-50%) translateY(20px);
+    background:var(--flag-yellow);
+    color:var(--turf-dark);
+    padding:10px 18px;
+    border-radius:20px;
+    font-family:'Oswald',sans-serif;
+    font-weight:600;
+    font-size:13px;
+    opacity:0;
+    transition:opacity .25s ease, transform .25s ease;
+    pointer-events:none;
+    box-shadow:0 8px 20px rgba(0,0,0,0.35);
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Home Green &middot; 9 Hole Challenge</div>
+    <h1>The Back Yard Nine</h1>
+    <div class="subtitle">Every putt 6ft+. Long diagonals to the yellow holes.</div>
+  </header>
+
+  <div class="card">
+    <div class="strip"><span>Hole</span><span id="dateLabel">Today</span></div>
+    <div id="holes"></div>
+    <div class="totals">
+      <div class="totals-row"><span>Target (2 putts/hole)</span><span>18</span></div>
+      <div class="totals-row big"><span>Total Putts</span><span id="totalPutts">0</span></div>
+      <div class="actions">
+        <button class="action-btn reset" id="resetBtn">Reset</button>
+        <button class="action-btn save" id="saveBtn">Save Round</button>
+      </div>
+      <div class="best" id="bestLabel">No saved rounds yet — play one to set your baseline.</div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast">Round saved</div>
+
+<script>
+const HOLES = [
+  {n:1, name:"8ft Left → Main Hole",     meta:"Longest straight putt on the mat"},
+  {n:2, name:"8ft Center → Main Hole",   meta:"Full length, dead straight"},
+  {n:3, name:"8ft Right → Main Hole",    meta:"Full length, opposite stance"},
+  {n:4, name:"6ft Left → Main Hole",     meta:"Mid-long straight putt"},
+  {n:5, name:"6ft Right → Main Hole",    meta:"Mid-long straight putt, opposite stance"},
+  {n:6, name:"8ft Right → 2ft Yellow",   meta:"Long diagonal · toughest line on the mat"},
+  {n:7, name:"8ft Left → 4ft Yellow",    meta:"Long diagonal cross-putt"},
+  {n:8, name:"6ft Right → 2ft Yellow",   meta:"Mid-length diagonal cross-putt"},
+  {n:9, name:"8ft Center → Bullseye",    meta:"Full-length lag · aim for the 100 ring"},
+];
+
+const holesEl = document.getElementById('holes');
+const totalEl = document.getElementById('totalPutts');
+const bestEl = document.getElementById('bestLabel');
+const toastEl = document.getElementById('toast');
+const dateLabel = document.getElementById('dateLabel');
+
+dateLabel.textContent = new Date().toLocaleDateString(undefined,{month:'short',day:'numeric'});
+
+let counts = new Array(HOLES.length).fill(0);
+
+function render(){
+  holesEl.innerHTML = HOLES.map((h,i)=>`
+    <div class="hole">
+      <div class="hole-num">${h.n}</div>
+      <div class="hole-info">
+        <div class="hole-name">${h.name}</div>
+        <div class="hole-meta">${h.meta}</div>
+      </div>
+      <div class="counter">
+        <div class="btn" data-action="dec" data-i="${i}">–</div>
+        <div class="count" id="count-${i}">${counts[i]}</div>
+        <div class="btn" data-action="inc" data-i="${i}">+</div>
+      </div>
+    </div>
+  `).join('');
+  updateTotal();
+}
+
+function updateTotal(){
+  const total = counts.reduce((a,b)=>a+b,0);
+  totalEl.textContent = total;
+  counts.forEach((c,i)=>{
+    const el = document.getElementById(`count-${i}`);
+    if(el) el.textContent = c;
+  });
+}
+
+holesEl.addEventListener('click', (e)=>{
+  const target = e.target.closest('.btn');
+  if(!target) return;
+  const i = parseInt(target.dataset.i);
+  if(target.dataset.action === 'inc') counts[i]++;
+  if(target.dataset.action === 'dec') counts[i] = Math.max(0, counts[i]-1);
+  updateTotal();
+});
+
+document.getElementById('resetBtn').addEventListener('click', ()=>{
+  counts = new Array(HOLES.length).fill(0);
+  render();
+});
+
+function showToast(msg){
+  toastEl.textContent = msg;
+  toastEl.classList.add('show');
+  setTimeout(()=>toastEl.classList.remove('show'), 1800);
+}
+
+function loadBest(){
+  try{
+    const raw = localStorage.getItem('best-round');
+    if(raw){
+      const data = JSON.parse(raw);
+      bestEl.innerHTML = `Best round: <b>${data.total} putts</b> on ${data.date}`;
+    }
+  }catch(err){
+    // no saved round yet, or storage unavailable
+  }
+}
+
+document.getElementById('saveBtn').addEventListener('click', ()=>{
+  const total = counts.reduce((a,b)=>a+b,0);
+  const dateStr = new Date().toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'});
+  try{
+    let isBest = true;
+    const existingRaw = localStorage.getItem('best-round');
+    if(existingRaw){
+      const data = JSON.parse(existingRaw);
+      if(total > data.total || total === 0) isBest = false;
+    }
+
+    localStorage.setItem('last-round', JSON.stringify({total, date: dateStr, counts}));
+
+    if(isBest && total > 0){
+      localStorage.setItem('best-round', JSON.stringify({total, date: dateStr}));
+      showToast(`New best! ${total} putts`);
+    } else {
+      showToast(`Round saved — ${total} putts`);
+    }
+    loadBest();
+  }catch(err){
+    showToast('Could not save round');
+  }
+});
+
+render();
+loadBest();
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => {
+      // service worker registration failed, app still works online
+    });
+  });
+}
+</script>
+</body>
+</html>
