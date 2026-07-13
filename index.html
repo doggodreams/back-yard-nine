@@ -299,6 +299,51 @@
         </div>
       </div>
     </div>
+
+    <!-- Chipping proximity -->
+    <div class="drill-screen" id="drill-chipping">
+      <button class="back-btn" data-back="drillList">← Back to drills</button>
+      <div class="drill-body">
+        <div class="drill-sub">Chipping Proximity · pick your target distance</div>
+        <div class="aw-row" id="chipDistRow"></div>
+        <div class="drill-target" id="chipTargetLabel">10m target</div>
+        <div class="drill-sub">tap the result of each chip</div>
+        <div class="ring-grid">
+          <button class="ring-btn" style="background:#2D6A4F" data-chip="tapin">Tap-in &lt;1m</button>
+          <button class="ring-btn" style="background:#4A8A5C" data-chip="close">Close &lt;3m</button>
+          <button class="ring-btn" style="background:#C99A2E" data-chip="green">On Green &lt;6m</button>
+          <button class="ring-btn" style="background:#B5433D" data-chip="miss">Missed &gt;6m</button>
+        </div>
+        <div class="drill-stats-row">
+          <div class="mini-stat"><div class="num" id="chipAttempts">0</div><div class="lbl">Attempts (this distance)</div></div>
+          <div class="mini-stat"><div class="num" id="chipTapinRate">—</div><div class="lbl">Tap-in Rate</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Yardage log -->
+    <div class="drill-screen" id="drill-yardage">
+      <button class="back-btn" data-back="drillList">← Back to drills</button>
+      <div class="drill-body">
+        <div class="drill-sub">Distance Control · log R10 carry by club</div>
+        <input class="spot-select" id="yardageClub" list="clubList" placeholder="Club (e.g. 7 Iron)">
+        <datalist id="clubList">
+          <option value="Driver"><option value="3 Wood"><option value="5 Wood">
+          <option value="3 Hybrid"><option value="4 Hybrid">
+          <option value="4 Iron"><option value="5 Iron"><option value="6 Iron">
+          <option value="7 Iron"><option value="8 Iron"><option value="9 Iron">
+          <option value="PW"><option value="GW"><option value="SW"><option value="LW">
+        </datalist>
+        <input class="spot-select" id="yardageCarry" type="number" placeholder="Carry distance (m)">
+        <input class="spot-select" id="yardageTarget" type="number" placeholder="Target distance (m) — optional">
+        <button class="new-round-btn" id="yardageLogBtn">Log Shot</button>
+        <div id="yardageRecent" style="text-align:left;margin-bottom:10px;"></div>
+        <div class="drill-stats-row">
+          <div class="mini-stat"><div class="num" id="yardageCount">0</div><div class="lbl">Shots Logged</div></div>
+          <div class="mini-stat"><div class="num" id="yardageClubs">0</div><div class="lbl">Clubs Tracked</div></div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- STATS VIEW -->
@@ -311,6 +356,14 @@
     <div class="stat-card">
       <h3>Average Putts by Difficulty</h3>
       <div id="statsTier"></div>
+    </div>
+    <div class="stat-card">
+      <h3>Chipping Proximity by Distance</h3>
+      <div id="statsChipping"></div>
+    </div>
+    <div class="stat-card">
+      <h3>Yardage Book</h3>
+      <div id="statsYardage"></div>
     </div>
   </div>
 </div>
@@ -551,6 +604,8 @@ const DRILL_META = [
   {id:'aroundworld', title:'Around the World', desc:'Clear left, center, and right stance at each distance before advancing.'},
   {id:'tenrow', title:'10 in a Row', desc:'Pick a spot and see how many you can make consecutively.'},
   {id:'lag', title:'Lag Putt Precision', desc:'From 8ft, log which scoring ring you land in. Track your average.'},
+  {id:'chipping', title:'Chipping Proximity', desc:'Pick a target distance up to 20m and log how close each chip finishes.'},
+  {id:'yardage', title:'Distance Control', desc:'Log club and carry from your R10 to build a real yardage book.'},
 ];
 
 function drillStat(id){
@@ -578,6 +633,22 @@ function drillStat(id){
       if(!log.length) return 'No putts logged yet';
       const avg = (log.reduce((a,b)=>a+b,0)/log.length).toFixed(0);
       return `Average score: ${avg}`;
+    }
+    if(id==='chipping'){
+      const raw = localStorage.getItem('byn-chip-log');
+      if(!raw) return 'No chips logged yet';
+      const log = JSON.parse(raw);
+      if(!log.length) return 'No chips logged yet';
+      const tapins = log.filter(l=>l.result==='tapin').length;
+      return `${log.length} chips logged · ${((tapins/log.length)*100).toFixed(0)}% tap-in rate`;
+    }
+    if(id==='yardage'){
+      const raw = localStorage.getItem('byn-yardage-log');
+      if(!raw) return 'No shots logged yet';
+      const log = JSON.parse(raw);
+      if(!log.length) return 'No shots logged yet';
+      const clubs = new Set(log.map(l=>l.club)).size;
+      return `${log.length} shots · ${clubs} club${clubs===1?'':'s'} tracked`;
     }
   }catch(err){ return ''; }
   return '';
@@ -729,11 +800,87 @@ function logLagPutt(score){
   if(score===100) showToast('Bullseye! 🎯');
   renderLag();
 }
-document.querySelectorAll('.ring-btn').forEach(btn=>{
+document.querySelectorAll('#drill-lag .ring-btn').forEach(btn=>{
   btn.addEventListener('click', ()=>logLagPutt(parseInt(btn.dataset.ring)));
 });
 document.getElementById('lagMissBtn').addEventListener('click', ()=>logLagPutt(0));
 renderLag();
+
+/* ---------------- Chipping proximity drill ---------------- */
+const CHIP_DISTANCES = [5,10,15,20];
+const CHIP_SCORE = {tapin:3, close:2, green:1, miss:0};
+const CHIP_LABEL = {tapin:'Tap-in <1m', close:'Close <3m', green:'On Green <6m', miss:'Missed >6m'};
+let chipDist = 10;
+function getChipLog(){
+  try{ return JSON.parse(localStorage.getItem('byn-chip-log')||'[]'); }catch(e){ return []; }
+}
+function renderChipRow(){
+  document.getElementById('chipDistRow').innerHTML = CHIP_DISTANCES.map(d=>`
+    <div class="aw-chip ${d===chipDist?'done':''}" data-dist="${d}">${d}m</div>
+  `).join('');
+  document.getElementById('chipTargetLabel').textContent = `${chipDist}m target`;
+}
+function renderChipStats(){
+  const log = getChipLog().filter(l=>l.distance===chipDist);
+  document.getElementById('chipAttempts').textContent = log.length;
+  const tapins = log.filter(l=>l.result==='tapin').length;
+  document.getElementById('chipTapinRate').textContent = log.length ? `${((tapins/log.length)*100).toFixed(0)}%` : '—';
+}
+document.getElementById('chipDistRow').addEventListener('click',(e)=>{
+  const chip = e.target.closest('[data-dist]');
+  if(!chip) return;
+  chipDist = parseInt(chip.dataset.dist);
+  renderChipRow();
+  renderChipStats();
+});
+document.querySelectorAll('#drill-chipping .ring-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const result = btn.dataset.chip;
+    const log = getChipLog();
+    log.push({distance: chipDist, result, date: new Date().toISOString()});
+    while(log.length > 300) log.shift();
+    localStorage.setItem('byn-chip-log', JSON.stringify(log));
+    if(result==='tapin') showToast('Tap-in! 🎯');
+    renderChipStats();
+  });
+});
+renderChipRow();
+renderChipStats();
+
+/* ---------------- Yardage / distance control drill ---------------- */
+function getYardageLog(){
+  try{ return JSON.parse(localStorage.getItem('byn-yardage-log')||'[]'); }catch(e){ return []; }
+}
+function renderYardage(){
+  const log = getYardageLog();
+  document.getElementById('yardageCount').textContent = log.length;
+  document.getElementById('yardageClubs').textContent = new Set(log.map(l=>l.club)).size;
+  const recent = log.slice(-5).reverse();
+  document.getElementById('yardageRecent').innerHTML = recent.length ? recent.map(r=>{
+    const delta = r.target ? (r.carry - r.target) : null;
+    const deltaTxt = delta===null ? '' : ` <span style="color:${Math.abs(delta)<=3?'#2D6A4F':'#B5433D'}">(${delta>0?'+':''}${delta}m)</span>`;
+    return `<div style="font-size:11.5px;padding:5px 0;border-bottom:1px solid var(--line);">${r.club} — ${r.carry}m${deltaTxt}</div>`;
+  }).join('') : '<div class="empty-note">No shots logged yet.</div>';
+}
+document.getElementById('yardageLogBtn').addEventListener('click', ()=>{
+  const club = document.getElementById('yardageClub').value.trim();
+  const carry = parseFloat(document.getElementById('yardageCarry').value);
+  const targetRaw = document.getElementById('yardageTarget').value;
+  const target = targetRaw ? parseFloat(targetRaw) : null;
+  if(!club || isNaN(carry)){
+    showToast('Enter a club and carry distance');
+    return;
+  }
+  const log = getYardageLog();
+  log.push({club, carry, target, date: new Date().toISOString()});
+  while(log.length > 300) log.shift();
+  localStorage.setItem('byn-yardage-log', JSON.stringify(log));
+  document.getElementById('yardageCarry').value = '';
+  document.getElementById('yardageTarget').value = '';
+  showToast('Shot logged');
+  renderYardage();
+});
+renderYardage();
 
 /* ---------------- Stats view ---------------- */
 function renderStats(){
@@ -751,12 +898,13 @@ function renderStats(){
 
   const stanceEl = document.getElementById('statsStance');
   const tierEl = document.getElementById('statsTier');
+  const chipEl = document.getElementById('statsChipping');
+  const yardageEl = document.getElementById('statsYardage');
 
   if(!allHoles.length){
     stanceEl.innerHTML = '<div class="empty-note">Save a round to start tracking stats.</div>';
     tierEl.innerHTML = '<div class="empty-note">Save a round to start tracking stats.</div>';
-    return;
-  }
+  } else {
 
   function avgBy(key){
     const groups = {};
@@ -788,6 +936,56 @@ function renderStats(){
       <div class="bar-track"><div class="bar-fill" style="width:${(d.avg/maxTier*100).toFixed(0)}%"></div></div>
     </div>
   `).join('');
+  }
+
+  // Chipping proximity stats
+  const chipLog = getChipLog();
+  if(!chipLog.length){
+    chipEl.innerHTML = '<div class="empty-note">Log a chipping session to see stats.</div>';
+  } else {
+    const groups = {};
+    chipLog.forEach(c=>{
+      if(!groups[c.distance]) groups[c.distance] = {sum:0,count:0};
+      groups[c.distance].sum += CHIP_SCORE[c.result];
+      groups[c.distance].count += 1;
+    });
+    const maxScore = 3;
+    chipEl.innerHTML = CHIP_DISTANCES.filter(d=>groups[d]).map(d=>{
+      const avg = groups[d].sum/groups[d].count;
+      return `
+        <div class="bar-row">
+          <div class="bar-label"><span>${d}m (${groups[d].count} chips)</span><b>${avg.toFixed(1)} / 3 avg</b></div>
+          <div class="bar-track"><div class="bar-fill" style="width:${(avg/maxScore*100).toFixed(0)}%"></div></div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  // Yardage book
+  const yardageLog = getYardageLog();
+  if(!yardageLog.length){
+    yardageEl.innerHTML = '<div class="empty-note">Log shots with your R10 to build your yardage book.</div>';
+  } else {
+    const groups = {};
+    yardageLog.forEach(y=>{
+      if(!groups[y.club]) groups[y.club] = [];
+      groups[y.club].push(y.carry);
+    });
+    const clubData = Object.entries(groups).map(([club, carries])=>({
+      club,
+      avg: carries.reduce((a,b)=>a+b,0)/carries.length,
+      min: Math.min(...carries),
+      max: Math.max(...carries),
+      count: carries.length
+    })).sort((a,b)=>b.avg-a.avg);
+    const maxAvg = Math.max(...clubData.map(d=>d.avg), 1);
+    yardageEl.innerHTML = clubData.map(d=>`
+      <div class="bar-row">
+        <div class="bar-label"><span>${d.club} (${d.count})</span><b>${d.avg.toFixed(0)}m avg · ${d.min}–${d.max}m</b></div>
+        <div class="bar-track"><div class="bar-fill" style="width:${(d.avg/maxAvg*100).toFixed(0)}%"></div></div>
+      </div>
+    `).join('');
+  }
 }
 
 /* ---------------- Init ---------------- */

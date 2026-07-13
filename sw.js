@@ -1,4 +1,4 @@
-const CACHE_NAME = 'back-yard-nine-v2';
+const CACHE_NAME = 'back-yard-nine-v3';
 const ASSETS = [
   './',
   './index.html',
