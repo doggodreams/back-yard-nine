@@ -1,13 +1,13 @@
 {
-  "name": "Back Yard Nine",
-  "short_name": "Back Yard Nine",
-  "description": "9-hole home putting green challenge and scorecard",
-  "start_url": "./index.html",
-  "scope": "./",
+  "name": "Numurkah GC — Break 90",
+  "short_name": "NGC Golf",
+  "description": "Hole-by-hole game plan and score tracker for Numurkah Golf Club",
+  "start_url": ".",
+  "scope": ".",
   "display": "standalone",
-  "orientation": "portrait",
-  "background_color": "#0F2E1F",
-  "theme_color": "#1B4332",
+  "background_color": "#2A5E24",
+  "theme_color": "#2A5E24",
+  "orientation": "portrait-primary",
   "icons": [
     {
       "src": "icon-192.png",
