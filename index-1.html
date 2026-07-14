@@ -1,0 +1,1049 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Back Yard Nine</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1B4332">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Back Yard Nine">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --turf-dark:#0F2E1F;
+    --turf:#1B4332;
+    --fairway:#2D6A4F;
+    --flag-yellow:#FFB703;
+    --paper:#F3EEDD;
+    --ink:#16231B;
+    --ink-soft:#4A5D51;
+    --line:#C9BFA0;
+    --white:#FBFAF4;
+    --red:#B5433D;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--turf-dark);
+    background-image:
+      radial-gradient(circle at 50% 0%, rgba(255,183,3,0.08), transparent 60%),
+      repeating-linear-gradient(90deg, rgba(255,255,255,0.015) 0px, rgba(255,255,255,0.015) 2px, transparent 2px, transparent 40px);
+    color:var(--ink);
+    font-family:'IBM Plex Mono', monospace;
+    min-height:100vh;
+    padding:0 0 90px;
+  }
+  .wrap{max-width:520px;margin:0 auto;padding:0 14px;}
+
+  header{padding:24px 14px 14px;text-align:center;}
+  .eyebrow{
+    font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.28em;
+    color:var(--flag-yellow);text-transform:uppercase;opacity:.85;margin-bottom:6px;
+  }
+  h1{
+    font-family:'Oswald',sans-serif;font-weight:700;font-size:clamp(28px,8vw,38px);
+    color:var(--white);margin:0;line-height:1.02;
+  }
+
+  .view{display:none;}
+  .view.active{display:block;}
+
+  /* ---- Round view ---- */
+  .segmented{
+    display:flex;background:rgba(0,0,0,0.25);border-radius:10px;padding:3px;margin:14px 0 12px;
+  }
+  .seg-btn{
+    flex:1;text-align:center;padding:9px 4px;border-radius:8px;border:none;background:transparent;
+    color:#B9C8BC;font-family:'Oswald',sans-serif;font-size:11.5px;letter-spacing:.04em;
+    text-transform:uppercase;font-weight:600;cursor:pointer;
+  }
+  .seg-btn.active{background:var(--flag-yellow);color:var(--turf-dark);}
+
+  .new-round-btn{
+    width:100%;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.25);
+    background:transparent;color:var(--paper);font-family:'Oswald',sans-serif;font-size:13px;
+    letter-spacing:.06em;text-transform:uppercase;font-weight:600;cursor:pointer;margin-bottom:14px;
+  }
+  .new-round-btn:active{opacity:.7;}
+
+  .card{background:var(--paper);border-radius:14px;box-shadow:0 18px 40px rgba(0,0,0,0.35);overflow:hidden;border:1px solid rgba(0,0,0,0.06);}
+  .strip{background:var(--turf);color:var(--paper);display:flex;align-items:center;justify-content:space-between;padding:10px 16px;font-family:'Oswald',sans-serif;font-size:13px;letter-spacing:.08em;text-transform:uppercase;}
+  .strip span:last-child{color:var(--flag-yellow);}
+
+  .hole{display:grid;grid-template-columns:34px 1fr auto auto;align-items:center;gap:8px;padding:13px 14px;border-bottom:1px solid var(--line);}
+  .hole:last-of-type{border-bottom:none;}
+  .hole-num{font-family:'Oswald',sans-serif;font-weight:600;font-size:20px;color:var(--fairway);text-align:center;position:relative;}
+  .hole-num::after{content:'';display:block;width:14px;height:2px;background:var(--flag-yellow);margin:4px auto 0;border-radius:2px;}
+  .hole-info{min-width:0;}
+  .hole-name{font-family:'Oswald',sans-serif;font-weight:500;font-size:13.5px;line-height:1.2;color:var(--ink);margin-bottom:3px;}
+  .hole-meta{font-size:10px;color:var(--ink-soft);letter-spacing:.02em;}
+  .tier-chip{
+    display:inline-block;font-size:9px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;
+    padding:1px 6px;border-radius:6px;margin-top:3px;font-family:'Oswald',sans-serif;
+  }
+  .tier-Easy{background:#DCEBD9;color:#3A6B35;}
+  .tier-Medium{background:#FDEBC8;color:#8A5A10;}
+  .tier-Hard{background:#F6D9CE;color:#A34424;}
+  .tier-VeryHard{background:#F2C9C6;color:var(--red);}
+
+  .reroll-btn{
+    width:26px;height:26px;border-radius:7px;border:1px solid var(--fairway);background:var(--white);
+    color:var(--fairway);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:13px;
+  }
+  .reroll-btn:active{transform:scale(.88);background:var(--fairway);color:#fff;}
+
+  .counter{display:flex;align-items:center;gap:6px;}
+  .btn{width:28px;height:28px;border-radius:8px;border:1px solid var(--fairway);background:var(--white);color:var(--fairway);
+    font-family:'Oswald',sans-serif;font-size:16px;font-weight:600;display:flex;align-items:center;justify-content:center;cursor:pointer;user-select:none;}
+  .btn:active{transform:scale(.9);background:var(--fairway);color:#fff;}
+  .count{min-width:20px;text-align:center;font-family:'Oswald',sans-serif;font-weight:700;font-size:17px;color:var(--ink);}
+
+  .totals{background:var(--turf);padding:16px 16px 18px;}
+  .totals-row{display:flex;justify-content:space-between;align-items:baseline;color:var(--paper);margin-bottom:6px;font-size:11px;letter-spacing:.05em;text-transform:uppercase;}
+  .totals-row.big{margin-top:10px;padding-top:12px;border-top:1px dashed rgba(255,255,255,0.25);}
+  .totals-row.big span:first-child{font-family:'Oswald',sans-serif;font-size:13px;color:var(--flag-yellow);text-transform:uppercase;}
+  .totals-row.big span:last-child{font-family:'Oswald',sans-serif;font-weight:700;font-size:28px;color:var(--white);}
+  .totals-row span:last-child{font-family:'IBM Plex Mono',monospace;color:var(--white);font-weight:600;}
+  .actions{display:flex;gap:10px;margin-top:14px;}
+  .action-btn{flex:1;padding:12px 10px;border-radius:10px;border:none;font-family:'Oswald',sans-serif;font-size:12.5px;letter-spacing:.06em;text-transform:uppercase;font-weight:600;cursor:pointer;}
+  .action-btn.reset{background:transparent;color:#DDD3B0;border:1px solid rgba(255,255,255,0.25);}
+  .action-btn.save{background:var(--flag-yellow);color:var(--turf-dark);}
+  .action-btn:active{opacity:.75;}
+  .best{text-align:center;color:#8FA396;font-size:10.5px;margin-top:12px;letter-spacing:.03em;}
+  .best b{color:var(--flag-yellow);font-weight:600;}
+
+  /* ---- Drills view ---- */
+  .drill-grid{display:flex;flex-direction:column;gap:10px;margin-top:14px;}
+  .drill-card{background:var(--paper);border-radius:12px;padding:14px 16px;cursor:pointer;box-shadow:0 10px 24px rgba(0,0,0,0.25);}
+  .drill-card:active{transform:scale(.98);}
+  .drill-title{font-family:'Oswald',sans-serif;font-weight:600;font-size:16px;color:var(--turf);margin-bottom:3px;}
+  .drill-desc{font-size:11px;color:var(--ink-soft);margin-bottom:6px;line-height:1.4;}
+  .drill-stat{font-size:10.5px;color:var(--fairway);font-weight:600;}
+
+  .drill-screen{display:none;}
+  .drill-screen.active{display:block;}
+  .back-btn{
+    display:inline-flex;align-items:center;gap:5px;color:var(--flag-yellow);background:none;border:none;
+    font-family:'Oswald',sans-serif;font-size:12px;letter-spacing:.05em;text-transform:uppercase;
+    font-weight:600;cursor:pointer;padding:8px 0 4px;
+  }
+  .drill-body{background:var(--paper);border-radius:14px;padding:22px 18px;text-align:center;box-shadow:0 18px 40px rgba(0,0,0,0.35);}
+  .drill-target{font-family:'Oswald',sans-serif;font-weight:700;font-size:26px;color:var(--turf);margin-bottom:4px;}
+  .drill-sub{font-size:11px;color:var(--ink-soft);margin-bottom:18px;}
+  .big-actions{display:flex;gap:10px;margin-bottom:18px;}
+  .big-btn{flex:1;padding:16px 8px;border-radius:12px;border:none;font-family:'Oswald',sans-serif;font-weight:700;font-size:14px;letter-spacing:.04em;text-transform:uppercase;cursor:pointer;}
+  .big-btn.made{background:var(--fairway);color:#fff;}
+  .big-btn.miss{background:var(--red);color:#fff;}
+  .big-btn:active{opacity:.75;}
+  .drill-stats-row{display:flex;justify-content:space-around;border-top:1px solid var(--line);padding-top:14px;}
+  .mini-stat{text-align:center;}
+  .mini-stat .num{font-family:'Oswald',sans-serif;font-weight:700;font-size:20px;color:var(--turf);}
+  .mini-stat .lbl{font-size:9.5px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.04em;}
+
+  .aw-row{display:flex;gap:8px;margin-bottom:16px;}
+  .aw-chip{flex:1;padding:12px 4px;border-radius:10px;border:2px solid var(--fairway);background:var(--white);
+    color:var(--fairway);font-family:'Oswald',sans-serif;font-weight:600;font-size:12px;cursor:pointer;}
+  .aw-chip.done{background:var(--fairway);color:#fff;}
+
+  select.spot-select{
+    width:100%;padding:11px;border-radius:9px;border:1px solid var(--line);background:var(--white);
+    font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--ink);margin-bottom:16px;
+  }
+
+  .ring-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;}
+  .ring-btn{padding:14px 6px;border-radius:10px;border:none;font-family:'Oswald',sans-serif;font-weight:700;font-size:14px;cursor:pointer;color:#fff;}
+  .ring-btn:active{opacity:.75;}
+
+  /* ---- Stats view ---- */
+  .stat-card{background:var(--paper);border-radius:14px;padding:16px;margin-top:14px;box-shadow:0 10px 24px rgba(0,0,0,0.25);}
+  .stat-card h3{font-family:'Oswald',sans-serif;font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--turf);margin:0 0 12px;}
+  .bar-row{margin-bottom:10px;}
+  .bar-label{display:flex;justify-content:space-between;font-size:11.5px;color:var(--ink);margin-bottom:4px;}
+  .bar-label b{color:var(--fairway);}
+  .bar-track{height:8px;background:var(--line);border-radius:4px;overflow:hidden;}
+  .bar-fill{height:100%;background:var(--fairway);border-radius:4px;}
+  .bar-fill.weak{background:var(--red);}
+  .empty-note{color:var(--ink-soft);font-size:11.5px;text-align:center;padding:10px 0;}
+  .stat-line{display:flex;justify-content:space-between;align-items:baseline;padding:9px 0;border-bottom:1px solid var(--line);font-size:12px;}
+  .stat-line:last-child{border-bottom:none;}
+  .stat-line .drill-lbl{color:var(--ink);font-weight:500;}
+  .stat-line .drill-val{color:var(--fairway);font-weight:600;text-align:right;font-family:'IBM Plex Mono',monospace;font-size:11px;}
+  .overview-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px;}
+  .overview-box{background:var(--paper);border-radius:12px;padding:14px;text-align:center;box-shadow:0 10px 24px rgba(0,0,0,0.25);}
+  .overview-box .num{font-family:'Oswald',sans-serif;font-weight:700;font-size:24px;color:var(--turf);}
+  .overview-box .lbl{font-size:10px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.04em;margin-top:2px;}
+
+  /* ---- Bottom tab bar ---- */
+  .tabbar{
+    position:fixed;bottom:0;left:0;right:0;background:var(--turf);border-top:1px solid rgba(255,255,255,0.1);
+    display:flex;padding:8px 10px calc(8px + env(safe-area-inset-bottom));z-index:10;
+  }
+  .tab-btn{flex:1;background:none;border:none;color:#8FA396;font-family:'Oswald',sans-serif;font-size:11px;
+    letter-spacing:.03em;text-transform:uppercase;font-weight:600;padding:8px 4px;cursor:pointer;text-align:center;}
+  .tab-btn.active{color:var(--flag-yellow);}
+
+  .toast{
+    position:fixed;bottom:78px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--flag-yellow);
+    color:var(--turf-dark);padding:10px 18px;border-radius:20px;font-family:'Oswald',sans-serif;font-weight:600;
+    font-size:13px;opacity:0;transition:opacity .25s ease, transform .25s ease;pointer-events:none;
+    box-shadow:0 8px 20px rgba(0,0,0,0.35);white-space:nowrap;
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Home Green Practice</div>
+    <h1>Back Yard Nine</h1>
+  </header>
+
+  <!-- ROUND VIEW -->
+  <div class="view active" id="view-round">
+    <div class="segmented" id="diffSeg">
+      <button class="seg-btn" data-diff="warmup">Warm-up</button>
+      <button class="seg-btn active" data-diff="standard">Standard</button>
+      <button class="seg-btn" data-diff="brutal">Brutal</button>
+    </div>
+    <button class="new-round-btn" id="newRoundBtn">🔀 New Random Round</button>
+
+    <div class="card">
+      <div class="strip"><span>Hole</span><span id="dateLabel">Today</span></div>
+      <div id="holes"></div>
+      <div class="totals">
+        <div class="totals-row"><span>Target (2 putts/hole)</span><span>18</span></div>
+        <div class="totals-row big"><span>Total Putts</span><span id="totalPutts">0</span></div>
+        <div class="actions">
+          <button class="action-btn reset" id="resetBtn">Reset Putts</button>
+          <button class="action-btn save" id="saveBtn">Save Round</button>
+        </div>
+        <div class="best" id="bestLabel">No saved rounds yet.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DRILLS VIEW -->
+  <div class="view" id="view-drills">
+    <div id="drillList" class="drill-grid"></div>
+
+    <!-- Ladder drill -->
+    <div class="drill-screen" id="drill-ladder">
+      <button class="back-btn" data-back="drillList">← Back to drills</button>
+      <div class="drill-body">
+        <div class="drill-sub">Ladder Drill · hole out to advance</div>
+        <div class="drill-target" id="ladderTarget">2ft Main Hole</div>
+        <div class="drill-sub" id="ladderSub">Miss and you reset to 2ft</div>
+        <div class="big-actions">
+          <button class="big-btn made" data-act="ladder-made">✓ Made</button>
+          <button class="big-btn miss" data-act="ladder-miss">✗ Missed</button>
+        </div>
+        <div class="drill-stats-row">
+          <div class="mini-stat"><div class="num" id="ladderClears">0</div><div class="lbl">Full Clears</div></div>
+          <div class="mini-stat"><div class="num" id="ladderBest">2ft</div><div class="lbl">Best Reach</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Around the world -->
+    <div class="drill-screen" id="drill-aroundworld">
+      <button class="back-btn" data-back="drillList">← Back to drills</button>
+      <div class="drill-body">
+        <div class="drill-sub">Around the World · clear all 3 stances</div>
+        <div class="drill-target" id="awTarget">2ft Main Hole</div>
+        <div class="aw-row" id="awChips"></div>
+        <div class="drill-stats-row">
+          <div class="mini-stat"><div class="num" id="awClears">0</div><div class="lbl">Full Rounds Cleared</div></div>
+          <div class="mini-stat"><div class="num" id="awLevel">1 / 4</div><div class="lbl">Current Level</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 10 in a row -->
+    <div class="drill-screen" id="drill-tenrow">
+      <button class="back-btn" data-back="drillList">← Back to drills</button>
+      <div class="drill-body">
+        <div class="drill-sub">10 in a Row · pick your spot</div>
+        <select class="spot-select" id="tenrowSpot"></select>
+        <div class="drill-target" id="tenrowStreak">0</div>
+        <div class="drill-sub">current streak</div>
+        <div class="big-actions">
+          <button class="big-btn made" data-act="tenrow-made">✓ Made</button>
+          <button class="big-btn miss" data-act="tenrow-miss">✗ Missed</button>
+        </div>
+        <div class="drill-stats-row">
+          <div class="mini-stat"><div class="num" id="tenrowBest">0</div><div class="lbl">Best Streak (Spot)</div></div>
+          <div class="mini-stat"><div class="num" id="tenrowAttempts">0</div><div class="lbl">Attempts Today</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Lag putt precision -->
+    <div class="drill-screen" id="drill-lag">
+      <button class="back-btn" data-back="drillList">← Back to drills</button>
+      <div class="drill-body">
+        <div class="drill-sub">Lag Putt Precision · 8ft into the scoring rings</div>
+        <div class="drill-target" id="lagAvg">—</div>
+        <div class="drill-sub">average score</div>
+        <div class="ring-grid">
+          <button class="ring-btn" style="background:#2D6A4F" data-ring="100">100 ring</button>
+          <button class="ring-btn" style="background:#4A8A5C" data-ring="50">50 ring</button>
+          <button class="ring-btn" style="background:#C99A2E" data-ring="25">25 ring</button>
+          <button class="ring-btn" style="background:#B5433D" data-ring="10">10 ring</button>
+        </div>
+        <button class="new-round-btn" data-ring="0" id="lagMissBtn">Missed rings entirely</button>
+        <div class="drill-stats-row">
+          <div class="mini-stat"><div class="num" id="lagCount">0</div><div class="lbl">Putts Logged</div></div>
+          <div class="mini-stat"><div class="num" id="lagBest">—</div><div class="lbl">Best Putt</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chipping proximity -->
+    <div class="drill-screen" id="drill-chipping">
+      <button class="back-btn" data-back="drillList">← Back to drills</button>
+      <div class="drill-body">
+        <div class="drill-sub">Chipping Proximity · pick your target distance</div>
+        <div class="aw-row" id="chipDistRow"></div>
+        <div class="drill-target" id="chipTargetLabel">10m target</div>
+        <div class="drill-sub">tap the result of each chip</div>
+        <div class="ring-grid">
+          <button class="ring-btn" style="background:#2D6A4F" data-chip="tapin">Tap-in &lt;1m</button>
+          <button class="ring-btn" style="background:#4A8A5C" data-chip="close">Close &lt;3m</button>
+          <button class="ring-btn" style="background:#C99A2E" data-chip="green">On Green &lt;6m</button>
+          <button class="ring-btn" style="background:#B5433D" data-chip="miss">Missed &gt;6m</button>
+        </div>
+        <div class="drill-stats-row">
+          <div class="mini-stat"><div class="num" id="chipAttempts">0</div><div class="lbl">Attempts (this distance)</div></div>
+          <div class="mini-stat"><div class="num" id="chipTapinRate">—</div><div class="lbl">Tap-in Rate</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Yardage log -->
+    <div class="drill-screen" id="drill-yardage">
+      <button class="back-btn" data-back="drillList">← Back to drills</button>
+      <div class="drill-body">
+        <div class="drill-sub">Distance Control · log R10 carry by club</div>
+        <input class="spot-select" id="yardageClub" list="clubList" placeholder="Club (e.g. 7 Iron)">
+        <datalist id="clubList">
+          <option value="Driver"><option value="3 Wood"><option value="5 Wood">
+          <option value="3 Hybrid"><option value="4 Hybrid">
+          <option value="4 Iron"><option value="5 Iron"><option value="6 Iron">
+          <option value="7 Iron"><option value="8 Iron"><option value="9 Iron">
+          <option value="PW"><option value="GW"><option value="SW"><option value="LW">
+        </datalist>
+        <input class="spot-select" id="yardageCarry" type="number" placeholder="Carry distance (m)">
+        <input class="spot-select" id="yardageTarget" type="number" placeholder="Target distance (m) — optional">
+        <button class="new-round-btn" id="yardageLogBtn">Log Shot</button>
+        <div id="yardageRecent" style="text-align:left;margin-bottom:10px;"></div>
+        <div class="drill-stats-row">
+          <div class="mini-stat"><div class="num" id="yardageCount">0</div><div class="lbl">Shots Logged</div></div>
+          <div class="mini-stat"><div class="num" id="yardageClubs">0</div><div class="lbl">Clubs Tracked</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STATS VIEW -->
+  <div class="view" id="view-stats">
+    <div class="overview-grid" id="statsOverview"></div>
+    <div class="stat-card">
+      <h3>Average Putts by Stance</h3>
+      <div id="statsStance"></div>
+    </div>
+    <div class="stat-card">
+      <h3>Average Putts by Difficulty</h3>
+      <div id="statsTier"></div>
+    </div>
+    <div class="stat-card">
+      <h3>Putting Drills</h3>
+      <div id="statsDrills"></div>
+    </div>
+    <div class="stat-card">
+      <h3>Chipping Proximity by Distance</h3>
+      <div id="statsChipping"></div>
+    </div>
+    <div class="stat-card">
+      <h3>Yardage Book</h3>
+      <div id="statsYardage"></div>
+    </div>
+  </div>
+</div>
+
+<div class="tabbar">
+  <button class="tab-btn active" data-view="view-round">⛳ Round</button>
+  <button class="tab-btn" data-view="view-drills">🎯 Drills</button>
+  <button class="tab-btn" data-view="view-stats">📊 Stats</button>
+</div>
+
+<div class="toast" id="toast">Saved</div>
+
+<script>
+/* ---------------- Combo pool ---------------- */
+const DISTANCES = [2,4,6,8];
+const STANCES = ['Left','Center','Right'];
+const YELLOW_SIDE = {2:'Left',4:'Right',6:'Left',8:'Right'};
+
+function tierForLen(len){
+  if(len<=2) return 'Easy';
+  if(len<=4) return 'Medium';
+  if(len<=6) return 'Hard';
+  return 'VeryHard';
+}
+
+function buildPool(){
+  const combos = [];
+  DISTANCES.forEach(d=>{
+    STANCES.forEach(s=>{
+      combos.push({
+        id:`m-${d}-${s}`, type:'main', start:d, stance:s, target:null, len:d,
+        tier: tierForLen(d),
+        label:`${d}ft ${s} → Main Hole`,
+        meta:`Start ${s.toLowerCase()} dot at ${d}ft · putt to scoring zone`
+      });
+      DISTANCES.forEach(dy=>{
+        if(dy===d){
+          combos.push({
+            id:`t-${d}-${s}`, type:'yellow-trivial', start:d, stance:s, target:dy, len:1, tier:'Trivial',
+            label:`${d}ft ${s} → ${dy}ft Yellow`,
+            meta:`Short crossing putt · ${YELLOW_SIDE[dy]} yellow hole`
+          });
+          return;
+        }
+        const len2 = Math.abs(d-dy);
+        const tier2 = len2<=2?'Easy':len2<=4?'Medium':'Hard';
+        combos.push({
+          id:`y-${d}-${s}-${dy}`, type:'yellow', start:d, stance:s, target:dy, len:len2, tier:tier2,
+          label:`${d}ft ${s} → ${dy}ft Yellow`,
+          meta:`Diagonal · ${YELLOW_SIDE[dy]} yellow hole at ${dy}ft`
+        });
+      });
+    });
+  });
+  return combos;
+}
+const POOL = buildPool();
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]]=[a[j],a[i]];
+  }
+  return a;
+}
+
+function takeRandom(tier, count, excludeIds){
+  const pool = shuffle(POOL.filter(c=>c.tier===tier && !excludeIds.includes(c.id)));
+  return pool.slice(0,count);
+}
+
+function generateRound(mode){
+  let picks = [];
+  const ids = ()=>picks.map(p=>p.id);
+  if(mode==='standard'){
+    picks = picks.concat(takeRandom('VeryHard',3,ids()));
+    picks = picks.concat(takeRandom('Hard',4,ids()));
+    picks = picks.concat(takeRandom('Medium',2,ids()));
+  } else if(mode==='brutal'){
+    picks = picks.concat(takeRandom('VeryHard',3,ids()));
+    picks = picks.concat(takeRandom('Hard',6,ids()));
+  } else {
+    picks = picks.concat(takeRandom('Trivial',2,ids()));
+    picks = picks.concat(takeRandom('Easy',3,ids()));
+    picks = picks.concat(takeRandom('Medium',3,ids()));
+    picks = picks.concat(takeRandom('Hard',1,ids()));
+  }
+  return shuffle(picks);
+}
+
+function rerollHole(index, currentRound){
+  const tier = currentRound[index].tier;
+  const excludeIds = currentRound.map(c=>c.id);
+  const replacement = takeRandom(tier,1,excludeIds)[0];
+  if(replacement) currentRound[index] = replacement;
+  return currentRound;
+}
+
+/* ---------------- Tab navigation ---------------- */
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(btn.dataset.view).classList.add('active');
+    if(btn.dataset.view === 'view-stats') renderStats();
+  });
+});
+
+/* ---------------- Round view ---------------- */
+let currentMode = 'standard';
+let round = generateRound(currentMode);
+let counts = new Array(9).fill(0);
+
+const holesEl = document.getElementById('holes');
+const totalEl = document.getElementById('totalPutts');
+const bestEl = document.getElementById('bestLabel');
+const toastEl = document.getElementById('toast');
+document.getElementById('dateLabel').textContent = new Date().toLocaleDateString(undefined,{month:'short',day:'numeric'});
+
+document.getElementById('diffSeg').addEventListener('click', (e)=>{
+  const btn = e.target.closest('.seg-btn');
+  if(!btn) return;
+  document.querySelectorAll('#diffSeg .seg-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  currentMode = btn.dataset.diff;
+});
+
+document.getElementById('newRoundBtn').addEventListener('click', ()=>{
+  round = generateRound(currentMode);
+  counts = new Array(9).fill(0);
+  renderRound();
+});
+
+function renderRound(){
+  holesEl.innerHTML = round.map((h,i)=>`
+    <div class="hole">
+      <div class="hole-num">${i+1}</div>
+      <div class="hole-info">
+        <div class="hole-name">${h.label}</div>
+        <div class="hole-meta">${h.meta}</div>
+        <span class="tier-chip tier-${h.tier}">${h.tier}</span>
+      </div>
+      <div class="reroll-btn" data-reroll="${i}">↻</div>
+      <div class="counter">
+        <div class="btn" data-action="dec" data-i="${i}">–</div>
+        <div class="count" id="count-${i}">${counts[i]}</div>
+        <div class="btn" data-action="inc" data-i="${i}">+</div>
+      </div>
+    </div>
+  `).join('');
+  updateTotal();
+}
+
+function updateTotal(){
+  const total = counts.reduce((a,b)=>a+b,0);
+  totalEl.textContent = total;
+  counts.forEach((c,i)=>{
+    const el = document.getElementById(`count-${i}`);
+    if(el) el.textContent = c;
+  });
+}
+
+holesEl.addEventListener('click', (e)=>{
+  const rerollBtn = e.target.closest('[data-reroll]');
+  if(rerollBtn){
+    const i = parseInt(rerollBtn.dataset.reroll);
+    round = rerollHole(i, round);
+    renderRound();
+    return;
+  }
+  const target = e.target.closest('.btn');
+  if(!target) return;
+  const i = parseInt(target.dataset.i);
+  if(target.dataset.action === 'inc') counts[i]++;
+  if(target.dataset.action === 'dec') counts[i] = Math.max(0, counts[i]-1);
+  updateTotal();
+});
+
+document.getElementById('resetBtn').addEventListener('click', ()=>{
+  counts = new Array(9).fill(0);
+  renderRound();
+});
+
+function showToast(msg){
+  toastEl.textContent = msg;
+  toastEl.classList.add('show');
+  setTimeout(()=>toastEl.classList.remove('show'), 1800);
+}
+
+function loadBest(){
+  try{
+    const raw = localStorage.getItem('byn-best-round');
+    if(raw){
+      const data = JSON.parse(raw);
+      bestEl.innerHTML = `Best round: <b>${data.total} putts</b> on ${data.date}`;
+    }
+  }catch(err){}
+}
+
+document.getElementById('saveBtn').addEventListener('click', ()=>{
+  const total = counts.reduce((a,b)=>a+b,0);
+  const dateStr = new Date().toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'});
+  try{
+    let isBest = true;
+    const existingRaw = localStorage.getItem('byn-best-round');
+    if(existingRaw){
+      const data = JSON.parse(existingRaw);
+      if(total > data.total || total === 0) isBest = false;
+    }
+    if(isBest && total > 0){
+      localStorage.setItem('byn-best-round', JSON.stringify({total, date: dateStr}));
+      showToast(`New best! ${total} putts`);
+    } else {
+      showToast(`Round saved — ${total} putts`);
+    }
+
+    // history for stats
+    const historyRaw = localStorage.getItem('byn-history');
+    const history = historyRaw ? JSON.parse(historyRaw) : [];
+    history.push({
+      date: dateStr, total,
+      holes: round.map((h,i)=>({stance:h.stance, tier:h.tier, type:h.type, putts:counts[i]}))
+    });
+    while(history.length > 30) history.shift();
+    localStorage.setItem('byn-history', JSON.stringify(history));
+
+    loadBest();
+    renderStats();
+  }catch(err){
+    showToast('Could not save round');
+  }
+});
+
+/* ---------------- Drills list ---------------- */
+const DRILL_META = [
+  {id:'ladder', title:'Ladder Drill', desc:'Hole out at 2ft, then 4, 6, 8ft. Miss and you reset to the start.'},
+  {id:'aroundworld', title:'Around the World', desc:'Clear left, center, and right stance at each distance before advancing.'},
+  {id:'tenrow', title:'10 in a Row', desc:'Pick a spot and see how many you can make consecutively.'},
+  {id:'lag', title:'Lag Putt Precision', desc:'From 8ft, log which scoring ring you land in. Track your average.'},
+  {id:'chipping', title:'Chipping Proximity', desc:'Pick a target distance up to 20m and log how close each chip finishes.'},
+  {id:'yardage', title:'Distance Control', desc:'Log club and carry from your R10 to build a real yardage book.'},
+];
+
+function drillStat(id){
+  try{
+    if(id==='ladder'){
+      const clears = parseInt(localStorage.getItem('byn-ladder-clears')||'0');
+      return `Best: ${clears} full clear${clears===1?'':'s'}`;
+    }
+    if(id==='aroundworld'){
+      const clears = parseInt(localStorage.getItem('byn-aw-clears')||'0');
+      return `Best: ${clears} full round${clears===1?'':'s'} cleared`;
+    }
+    if(id==='tenrow'){
+      const raw = localStorage.getItem('byn-tenrow-data');
+      if(!raw) return 'No streaks yet';
+      const data = JSON.parse(raw);
+      const bests = Object.values(data).map(d=>d.best||0);
+      const max = bests.length ? Math.max(...bests) : 0;
+      return `Best streak: ${max}`;
+    }
+    if(id==='lag'){
+      const raw = localStorage.getItem('byn-lag-log');
+      if(!raw) return 'No putts logged yet';
+      const log = JSON.parse(raw);
+      if(!log.length) return 'No putts logged yet';
+      const avg = (log.reduce((a,b)=>a+b,0)/log.length).toFixed(0);
+      return `Average score: ${avg}`;
+    }
+    if(id==='chipping'){
+      const raw = localStorage.getItem('byn-chip-log');
+      if(!raw) return 'No chips logged yet';
+      const log = JSON.parse(raw);
+      if(!log.length) return 'No chips logged yet';
+      const tapins = log.filter(l=>l.result==='tapin').length;
+      return `${log.length} chips logged · ${((tapins/log.length)*100).toFixed(0)}% tap-in rate`;
+    }
+    if(id==='yardage'){
+      const raw = localStorage.getItem('byn-yardage-log');
+      if(!raw) return 'No shots logged yet';
+      const log = JSON.parse(raw);
+      if(!log.length) return 'No shots logged yet';
+      const clubs = new Set(log.map(l=>l.club)).size;
+      return `${log.length} shots · ${clubs} club${clubs===1?'':'s'} tracked`;
+    }
+  }catch(err){ return ''; }
+  return '';
+}
+
+function renderDrillList(){
+  document.getElementById('drillList').innerHTML = DRILL_META.map(d=>`
+    <div class="drill-card" data-open="${d.id}">
+      <div class="drill-title">${d.title}</div>
+      <div class="drill-desc">${d.desc}</div>
+      <div class="drill-stat">${drillStat(d.id)}</div>
+    </div>
+  `).join('');
+}
+renderDrillList();
+
+document.getElementById('drillList').addEventListener('click', (e)=>{
+  const card = e.target.closest('[data-open]');
+  if(!card) return;
+  document.getElementById('drillList').style.display = 'none';
+  document.getElementById(`drill-${card.dataset.open}`).classList.add('active');
+});
+
+document.querySelectorAll('[data-back]').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.drill-screen').forEach(s=>s.classList.remove('active'));
+    document.getElementById('drillList').style.display = 'flex';
+    renderDrillList();
+  });
+});
+
+/* ---------------- Ladder drill ---------------- */
+const LADDER_DISTS = [2,4,6,8];
+let ladderRung = 0;
+function ladderDistLabel(i){ return `${LADDER_DISTS[i]}ft Main Hole`; }
+function renderLadder(){
+  document.getElementById('ladderTarget').textContent = ladderDistLabel(ladderRung);
+  document.getElementById('ladderSub').textContent = ladderRung===0 ? 'Miss and you stay at 2ft' : 'Miss and you reset to 2ft';
+  document.getElementById('ladderClears').textContent = localStorage.getItem('byn-ladder-clears')||'0';
+  const bestFt = localStorage.getItem('byn-ladder-best-ft')||'2';
+  document.getElementById('ladderBest').textContent = `${bestFt}ft`;
+}
+renderLadder();
+document.querySelector('[data-act="ladder-made"]').addEventListener('click', ()=>{
+  const bestFt = parseInt(localStorage.getItem('byn-ladder-best-ft')||'2');
+  const reachedFt = LADDER_DISTS[ladderRung];
+  if(reachedFt > bestFt) localStorage.setItem('byn-ladder-best-ft', reachedFt);
+  if(ladderRung === LADDER_DISTS.length-1){
+    const clears = parseInt(localStorage.getItem('byn-ladder-clears')||'0')+1;
+    localStorage.setItem('byn-ladder-clears', clears);
+    ladderRung = 0;
+    showToast('Ladder cleared! 🏆');
+  } else {
+    ladderRung++;
+  }
+  renderLadder();
+});
+document.querySelector('[data-act="ladder-miss"]').addEventListener('click', ()=>{
+  ladderRung = 0;
+  renderLadder();
+});
+
+/* ---------------- Around the world drill ---------------- */
+let awLevel = 0;
+let awChecked = {Left:false, Center:false, Right:false};
+function renderAW(){
+  document.getElementById('awTarget').textContent = `${LADDER_DISTS[awLevel]}ft Main Hole`;
+  document.getElementById('awLevel').textContent = `${awLevel+1} / 4`;
+  document.getElementById('awClears').textContent = localStorage.getItem('byn-aw-clears')||'0';
+  document.getElementById('awChips').innerHTML = STANCES.map(s=>`
+    <div class="aw-chip ${awChecked[s]?'done':''}" data-stance="${s}">${s}</div>
+  `).join('');
+}
+renderAW();
+document.getElementById('awChips').addEventListener('click',(e)=>{
+  const chip = e.target.closest('[data-stance]');
+  if(!chip) return;
+  const s = chip.dataset.stance;
+  awChecked[s] = true;
+  if(Object.values(awChecked).every(v=>v)){
+    if(awLevel === LADDER_DISTS.length-1){
+      const clears = parseInt(localStorage.getItem('byn-aw-clears')||'0')+1;
+      localStorage.setItem('byn-aw-clears', clears);
+      awLevel = 0;
+      showToast('Around the World cleared! 🌍');
+    } else {
+      awLevel++;
+    }
+    awChecked = {Left:false, Center:false, Right:false};
+  }
+  renderAW();
+});
+
+/* ---------------- 10 in a row drill ---------------- */
+const TENROW_SPOTS = [];
+DISTANCES.forEach(d=>STANCES.forEach(s=>TENROW_SPOTS.push({id:`${d}-${s}`, label:`${d}ft ${s} → Main Hole`})));
+const spotSelect = document.getElementById('tenrowSpot');
+spotSelect.innerHTML = TENROW_SPOTS.map(s=>`<option value="${s.id}">${s.label}</option>`).join('');
+let tenrowStreak = 0;
+let tenrowAttempts = 0;
+function getTenrowData(){
+  try{ return JSON.parse(localStorage.getItem('byn-tenrow-data')||'{}'); }catch(e){ return {}; }
+}
+function renderTenrow(){
+  document.getElementById('tenrowStreak').textContent = tenrowStreak;
+  document.getElementById('tenrowAttempts').textContent = tenrowAttempts;
+  const data = getTenrowData();
+  const spotId = spotSelect.value;
+  document.getElementById('tenrowBest').textContent = (data[spotId] && data[spotId].best) || 0;
+}
+spotSelect.addEventListener('change', ()=>{
+  tenrowStreak = 0;
+  tenrowAttempts = 0;
+  renderTenrow();
+});
+document.querySelector('[data-act="tenrow-made"]').addEventListener('click', ()=>{
+  tenrowStreak++;
+  tenrowAttempts++;
+  const data = getTenrowData();
+  const spotId = spotSelect.value;
+  if(!data[spotId]) data[spotId] = {best:0};
+  if(tenrowStreak > data[spotId].best) data[spotId].best = tenrowStreak;
+  localStorage.setItem('byn-tenrow-data', JSON.stringify(data));
+  if(tenrowStreak === 10) showToast('10 in a row! 🔥');
+  renderTenrow();
+});
+document.querySelector('[data-act="tenrow-miss"]').addEventListener('click', ()=>{
+  tenrowStreak = 0;
+  tenrowAttempts++;
+  renderTenrow();
+});
+renderTenrow();
+
+/* ---------------- Lag putt precision drill ---------------- */
+function getLagLog(){
+  try{ return JSON.parse(localStorage.getItem('byn-lag-log')||'[]'); }catch(e){ return []; }
+}
+function renderLag(){
+  const log = getLagLog();
+  document.getElementById('lagCount').textContent = log.length;
+  document.getElementById('lagAvg').textContent = log.length ? (log.reduce((a,b)=>a+b,0)/log.length).toFixed(0) : '—';
+  document.getElementById('lagBest').textContent = log.length ? Math.max(...log) : '—';
+}
+function logLagPutt(score){
+  const log = getLagLog();
+  log.push(score);
+  while(log.length > 50) log.shift();
+  localStorage.setItem('byn-lag-log', JSON.stringify(log));
+  if(score===100) showToast('Bullseye! 🎯');
+  renderLag();
+}
+document.querySelectorAll('#drill-lag .ring-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>logLagPutt(parseInt(btn.dataset.ring)));
+});
+document.getElementById('lagMissBtn').addEventListener('click', ()=>logLagPutt(0));
+renderLag();
+
+/* ---------------- Chipping proximity drill ---------------- */
+const CHIP_DISTANCES = [5,10,15,20];
+const CHIP_SCORE = {tapin:3, close:2, green:1, miss:0};
+const CHIP_LABEL = {tapin:'Tap-in <1m', close:'Close <3m', green:'On Green <6m', miss:'Missed >6m'};
+let chipDist = 10;
+function getChipLog(){
+  try{ return JSON.parse(localStorage.getItem('byn-chip-log')||'[]'); }catch(e){ return []; }
+}
+function renderChipRow(){
+  document.getElementById('chipDistRow').innerHTML = CHIP_DISTANCES.map(d=>`
+    <div class="aw-chip ${d===chipDist?'done':''}" data-dist="${d}">${d}m</div>
+  `).join('');
+  document.getElementById('chipTargetLabel').textContent = `${chipDist}m target`;
+}
+function renderChipStats(){
+  const log = getChipLog().filter(l=>l.distance===chipDist);
+  document.getElementById('chipAttempts').textContent = log.length;
+  const tapins = log.filter(l=>l.result==='tapin').length;
+  document.getElementById('chipTapinRate').textContent = log.length ? `${((tapins/log.length)*100).toFixed(0)}%` : '—';
+}
+document.getElementById('chipDistRow').addEventListener('click',(e)=>{
+  const chip = e.target.closest('[data-dist]');
+  if(!chip) return;
+  chipDist = parseInt(chip.dataset.dist);
+  renderChipRow();
+  renderChipStats();
+});
+document.querySelectorAll('#drill-chipping .ring-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const result = btn.dataset.chip;
+    const log = getChipLog();
+    log.push({distance: chipDist, result, date: new Date().toISOString()});
+    while(log.length > 300) log.shift();
+    localStorage.setItem('byn-chip-log', JSON.stringify(log));
+    if(result==='tapin') showToast('Tap-in! 🎯');
+    renderChipStats();
+  });
+});
+renderChipRow();
+renderChipStats();
+
+/* ---------------- Yardage / distance control drill ---------------- */
+function getYardageLog(){
+  try{ return JSON.parse(localStorage.getItem('byn-yardage-log')||'[]'); }catch(e){ return []; }
+}
+function renderYardage(){
+  const log = getYardageLog();
+  document.getElementById('yardageCount').textContent = log.length;
+  document.getElementById('yardageClubs').textContent = new Set(log.map(l=>l.club)).size;
+  const recent = log.slice(-5).reverse();
+  document.getElementById('yardageRecent').innerHTML = recent.length ? recent.map(r=>{
+    const delta = r.target ? (r.carry - r.target) : null;
+    const deltaTxt = delta===null ? '' : ` <span style="color:${Math.abs(delta)<=3?'#2D6A4F':'#B5433D'}">(${delta>0?'+':''}${delta}m)</span>`;
+    return `<div style="font-size:11.5px;padding:5px 0;border-bottom:1px solid var(--line);">${r.club} — ${r.carry}m${deltaTxt}</div>`;
+  }).join('') : '<div class="empty-note">No shots logged yet.</div>';
+}
+document.getElementById('yardageLogBtn').addEventListener('click', ()=>{
+  const club = document.getElementById('yardageClub').value.trim();
+  const carry = parseFloat(document.getElementById('yardageCarry').value);
+  const targetRaw = document.getElementById('yardageTarget').value;
+  const target = targetRaw ? parseFloat(targetRaw) : null;
+  if(!club || isNaN(carry)){
+    showToast('Enter a club and carry distance');
+    return;
+  }
+  const log = getYardageLog();
+  log.push({club, carry, target, date: new Date().toISOString()});
+  while(log.length > 300) log.shift();
+  localStorage.setItem('byn-yardage-log', JSON.stringify(log));
+  document.getElementById('yardageCarry').value = '';
+  document.getElementById('yardageTarget').value = '';
+  showToast('Shot logged');
+  renderYardage();
+});
+renderYardage();
+
+/* ---------------- Stats view ---------------- */
+function renderStats(){
+  const historyRaw = localStorage.getItem('byn-history');
+  const history = historyRaw ? JSON.parse(historyRaw) : [];
+  const allHoles = history.flatMap(r=>r.holes);
+
+  const overview = document.getElementById('statsOverview');
+  const bestRaw = localStorage.getItem('byn-best-round');
+  const best = bestRaw ? JSON.parse(bestRaw).total : '—';
+  overview.innerHTML = `
+    <div class="overview-box"><div class="num">${history.length}</div><div class="lbl">Rounds Saved</div></div>
+    <div class="overview-box"><div class="num">${best}</div><div class="lbl">Best Round</div></div>
+  `;
+
+  const stanceEl = document.getElementById('statsStance');
+  const tierEl = document.getElementById('statsTier');
+  const chipEl = document.getElementById('statsChipping');
+  const yardageEl = document.getElementById('statsYardage');
+
+  if(!allHoles.length){
+    stanceEl.innerHTML = '<div class="empty-note">Save a round to start tracking stats.</div>';
+    tierEl.innerHTML = '<div class="empty-note">Save a round to start tracking stats.</div>';
+  } else {
+
+  function avgBy(key){
+    const groups = {};
+    allHoles.forEach(h=>{
+      if(h.putts<=0) return;
+      const k = h[key];
+      if(!groups[k]) groups[k] = {sum:0,count:0};
+      groups[k].sum += h.putts;
+      groups[k].count += 1;
+    });
+    return Object.entries(groups).map(([k,v])=>({key:k, avg: v.sum/v.count})).sort((a,b)=>b.avg-a.avg);
+  }
+
+  const stanceData = avgBy('stance');
+  const maxStance = Math.max(...stanceData.map(d=>d.avg), 1);
+  stanceEl.innerHTML = stanceData.map((d,i)=>`
+    <div class="bar-row">
+      <div class="bar-label"><span>${d.key}${i===0 && stanceData.length>1 ? ' (weakest)':''}</span><b>${d.avg.toFixed(1)} putts avg</b></div>
+      <div class="bar-track"><div class="bar-fill ${i===0 && stanceData.length>1 ?'weak':''}" style="width:${(d.avg/maxStance*100).toFixed(0)}%"></div></div>
+    </div>
+  `).join('');
+
+  const tierOrder = ['Easy','Medium','Hard','VeryHard'];
+  const tierData = avgBy('tier').sort((a,b)=>tierOrder.indexOf(a.key)-tierOrder.indexOf(b.key));
+  const maxTier = Math.max(...tierData.map(d=>d.avg), 1);
+  tierEl.innerHTML = tierData.map(d=>`
+    <div class="bar-row">
+      <div class="bar-label"><span>${d.key}</span><b>${d.avg.toFixed(1)} putts avg</b></div>
+      <div class="bar-track"><div class="bar-fill" style="width:${(d.avg/maxTier*100).toFixed(0)}%"></div></div>
+    </div>
+  `).join('');
+  }
+
+  // Putting drills summary
+  const drillsEl = document.getElementById('statsDrills');
+  const rows = [];
+
+  const ladderClears = parseInt(localStorage.getItem('byn-ladder-clears')||'0');
+  const ladderBest = localStorage.getItem('byn-ladder-best-ft');
+  rows.push(`<div class="stat-line"><span class="drill-lbl">Ladder Drill</span><span class="drill-val">${ladderBest ? `${ladderClears} clears · best reach ${ladderBest}ft` : 'No attempts yet'}</span></div>`);
+
+  const awClears = parseInt(localStorage.getItem('byn-aw-clears')||'0');
+  rows.push(`<div class="stat-line"><span class="drill-lbl">Around the World</span><span class="drill-val">${awClears>0 ? `${awClears} full round${awClears===1?'':'s'} cleared` : 'No full rounds cleared yet'}</span></div>`);
+
+  const tenrowRaw = localStorage.getItem('byn-tenrow-data');
+  if(tenrowRaw){
+    const data = JSON.parse(tenrowRaw);
+    const entries = Object.entries(data).filter(([k,v])=>v.best>0);
+    if(entries.length){
+      entries.sort((a,b)=>b[1].best-a[1].best);
+      const [bestSpotId, bestVal] = entries[0];
+      const [d,s] = bestSpotId.split('-');
+      rows.push(`<div class="stat-line"><span class="drill-lbl">10 in a Row</span><span class="drill-val">Best streak ${bestVal.best} · ${d}ft ${s}</span></div>`);
+    } else {
+      rows.push(`<div class="stat-line"><span class="drill-lbl">10 in a Row</span><span class="drill-val">No streaks yet</span></div>`);
+    }
+  } else {
+    rows.push(`<div class="stat-line"><span class="drill-lbl">10 in a Row</span><span class="drill-val">No streaks yet</span></div>`);
+  }
+
+  const lagLog = getLagLog();
+  if(lagLog.length){
+    const avg = (lagLog.reduce((a,b)=>a+b,0)/lagLog.length).toFixed(0);
+    rows.push(`<div class="stat-line"><span class="drill-lbl">Lag Putt Precision</span><span class="drill-val">${lagLog.length} logged · avg ${avg} · best ${Math.max(...lagLog)}</span></div>`);
+  } else {
+    rows.push(`<div class="stat-line"><span class="drill-lbl">Lag Putt Precision</span><span class="drill-val">No putts logged yet</span></div>`);
+  }
+
+  drillsEl.innerHTML = rows.join('');
+
+  // Chipping proximity stats
+  const chipLog = getChipLog();
+  if(!chipLog.length){
+    chipEl.innerHTML = '<div class="empty-note">Log a chipping session to see stats.</div>';
+  } else {
+    const groups = {};
+    chipLog.forEach(c=>{
+      if(!groups[c.distance]) groups[c.distance] = {sum:0,count:0};
+      groups[c.distance].sum += CHIP_SCORE[c.result];
+      groups[c.distance].count += 1;
+    });
+    const maxScore = 3;
+    chipEl.innerHTML = CHIP_DISTANCES.filter(d=>groups[d]).map(d=>{
+      const avg = groups[d].sum/groups[d].count;
+      return `
+        <div class="bar-row">
+          <div class="bar-label"><span>${d}m (${groups[d].count} chips)</span><b>${avg.toFixed(1)} / 3 avg</b></div>
+          <div class="bar-track"><div class="bar-fill" style="width:${(avg/maxScore*100).toFixed(0)}%"></div></div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  // Yardage book
+  const yardageLog = getYardageLog();
+  if(!yardageLog.length){
+    yardageEl.innerHTML = '<div class="empty-note">Log shots with your R10 to build your yardage book.</div>';
+  } else {
+    const groups = {};
+    yardageLog.forEach(y=>{
+      if(!groups[y.club]) groups[y.club] = [];
+      groups[y.club].push(y.carry);
+    });
+    const clubData = Object.entries(groups).map(([club, carries])=>({
+      club,
+      avg: carries.reduce((a,b)=>a+b,0)/carries.length,
+      min: Math.min(...carries),
+      max: Math.max(...carries),
+      count: carries.length
+    })).sort((a,b)=>b.avg-a.avg);
+    const maxAvg = Math.max(...clubData.map(d=>d.avg), 1);
+    yardageEl.innerHTML = clubData.map(d=>`
+      <div class="bar-row">
+        <div class="bar-label"><span>${d.club} (${d.count})</span><b>${d.avg.toFixed(0)}m avg · ${d.min}–${d.max}m</b></div>
+        <div class="bar-track"><div class="bar-fill" style="width:${(d.avg/maxAvg*100).toFixed(0)}%"></div></div>
+      </div>
+    `).join('');
+  }
+}
+
+/* ---------------- Init ---------------- */
+renderRound();
+loadBest();
+renderStats();
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  });
+}
+</script>
+</body>
+</html>
